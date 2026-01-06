@@ -8,43 +8,112 @@
   </head>
   <body>
     <header>
-      <h1>Mergington High School</h1>
-      <h2>Extracurricular Activities</h2>
+      <h1>🎓 Mergington High School</h1>
+      <h2 style="color: white; text-align: center; margin-top: -20px;">Extracurricular Activities</h2>
     </header>
 
     <main>
       <section id="activities-container">
-        <h3>Available Activities</h3>
-        <div id="activities-list">
+        <div id="activities-list" class="activities-grid">
           <!-- Activities will be loaded here -->
-          <p>Loading activities...</p>
+          <p style="color: white;">Loading activities...</p>
         </div>
-      </section>
-
-      <section id="signup-container">
-        <h3>Sign Up for an Activity</h3>
-        <form id="signup-form">
-          <div class="form-group">
-            <label for="email">Student Email:</label>
-            <input type="email" id="email" required placeholder="your-email@mergington.edu" />
-          </div>
-          <div class="form-group">
-            <label for="activity">Select Activity:</label>
-            <select id="activity" required>
-              <option value="">-- Select an activity --</option>
-              <!-- Activity options will be loaded here -->
-            </select>
-          </div>
-          <button type="submit">Sign Up</button>
-        </form>
-        <div id="message" class="hidden"></div>
       </section>
     </main>
 
-    <footer>
+    <footer style="color: white; text-align: center; margin-top: 40px;">
       <p>&copy; 2023 Mergington High School</p>
     </footer>
 
-    <script src="app.js"></script>
+    <script>
+      async function loadActivities() {
+        const response = await fetch('/activities');
+        const activities = await response.json();
+        
+        const container = document.getElementById('activities-list');
+        container.innerHTML = '';
+        
+        for (const [name, details] of Object.entries(activities)) {
+          const card = document.createElement('div');
+          card.className = 'activity-card';
+          
+          const participantsList = details.participants.map(email => 
+            `<li>
+              ${email}
+              <span class="delete-icon" onclick="unregister('${name}', '${email}')" title="Remove participant">🗑️</span>
+            </li>`
+          ).join('');
+          
+          const participantCount = `${details.participants.length} / ${details.max_participants}`;
+          
+          card.innerHTML = `
+              <h2>${name}</h2>
+              <p>${details.description}</p>
+              <div class="schedule">📅 ${details.schedule}</div>
+              
+              <div class="participants-section">
+                  <h3>Participants <span class="participant-count">(${participantCount})</span></h3>
+                  ${details.participants.length > 0 ? 
+                      `<ul class="participants-list">${participantsList}</ul>` :
+                      '<p class="participant-count">No participants yet. Be the first to sign up!</p>'
+                  }
+              </div>
+              
+              <div class="signup-form">
+                  <input type="email" placeholder="Enter your email" id="email-${name}">
+                  <button onclick="signup('${name}')">Sign Up</button>
+                  <div id="message-${name}"></div>
+              </div>
+          `;
+          container.appendChild(card);
+        }
+      }
+
+      async function signup(activityName) {
+        const email = document.getElementById(`email-${activityName}`).value;
+        const messageDiv = document.getElementById(`message-${activityName}`);
+        
+        if (!email) {
+          messageDiv.innerHTML = '<div class="message error">Please enter your email</div>';
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/activities/${encodeURIComponent(activityName)}/signup?email=${encodeURIComponent(email)}`, {
+              method: 'POST'
+          });
+          
+          if (response.ok) {
+            messageDiv.innerHTML = '<div class="message success">Successfully signed up!</div>';
+            document.getElementById(`email-${activityName}`).value = '';
+            setTimeout(() => loadActivities(), 1000);
+          } else {
+            const error = await response.json();
+            messageDiv.innerHTML = `<div class="message error">${error.detail}</div>`;
+          }
+        } catch (error) {
+          messageDiv.innerHTML = '<div class="message error">Error signing up. Please try again.</div>';
+        }
+      }
+
+      async function unregister(activityName, email) {
+        try {
+          const response = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`, {
+              method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            loadActivities();
+          } else {
+            const error = await response.json();
+            alert(`Error: ${error.detail}`);
+          }
+        } catch (error) {
+          alert('Error unregistering participant. Please try again.');
+        }
+      }
+
+      loadActivities();
+    </script>
   </body>
 </html>
