@@ -133,19 +133,26 @@ section h3 {
 }
 
 .participants-list li {
-  padding: 6px 0 6px 20px;
+  padding: 6px 0;
   color: #666;
   font-size: 14px;
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.participants-list li::before {
-  content: "•";
-  color: #667eea;
-  font-weight: bold;
-  font-size: 18px;
-  position: absolute;
-  left: 0;
+.delete-icon {
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  padding: 2px 4px;
+}
+
+.delete-icon:hover {
+  opacity: 1;
+  transform: scale(1.2);
 }
 
 .participant-count {

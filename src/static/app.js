@@ -21,7 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const spotsLeft = details.max_participants - details.participants.length;
         
         const participantsList = details.participants.map(email => 
-          `<li>${email}</li>`
+          `<li>
+            ${email}
+            <span class="delete-icon" onclick="unregisterParticipant('${name}', '${email}')" title="Remove participant">🗑️</span>
+          </li>`
         ).join('');
         
         const participantCount = `${details.participants.length} / ${details.max_participants}`;
@@ -76,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // Refresh the activities list
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -97,4 +101,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Unregister participant function (global scope for onclick)
+  window.unregisterParticipant = async function(activityName, email) {
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        fetchActivities(); // Refresh the activities list
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
+      }
+    } catch (error) {
+      alert('Error unregistering participant. Please try again.');
+      console.error("Error unregistering:", error);
+    }
+  };
 });

@@ -38,7 +38,10 @@
           card.className = 'activity-card';
           
           const participantsList = details.participants.map(email => 
-            `<li>${email}</li>`
+            `<li>
+              ${email}
+              <span class="delete-icon" onclick="unregister('${name}', '${email}')" title="Remove participant">🗑️</span>
+            </li>`
           ).join('');
           
           const participantCount = `${details.participants.length} / ${details.max_participants}`;
@@ -90,6 +93,23 @@
           }
         } catch (error) {
           messageDiv.innerHTML = '<div class="message error">Error signing up. Please try again.</div>';
+        }
+      }
+
+      async function unregister(activityName, email) {
+        try {
+          const response = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`, {
+              method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            loadActivities();
+          } else {
+            const error = await response.json();
+            alert(`Error: ${error.detail}`);
+          }
+        } catch (error) {
+          alert('Error unregistering participant. Please try again.');
         }
       }
 
